@@ -1,7 +1,13 @@
 package invpalmark;
 
-import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import com.formdev.flatlaf.FlatDarkLaf;
+import javax.swing.SwingConstants;
+import javax.swing.JOptionPane;
+import java.text.DecimalFormat;
+import java.awt.Component;
+import javax.swing.JTable;
 
 public class InvView extends javax.swing.JFrame {
 
@@ -9,9 +15,45 @@ public class InvView extends javax.swing.JFrame {
     private final java.util.List<Producto> productos = new java.util.ArrayList<>();
     private DefaultTableModel modeloTabla;
     private int codigoC = 1;
+    
+    private static class PrecioRenderer extends DefaultTableCellRenderer {
+        private final DecimalFormat formatter = new DecimalFormat("$ #,##0.00");
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value instanceof Number) {
+                value = formatter.format(value);
+            }
+            return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        }
+    }
+    
+    private static class CodigoRenderer extends DefaultTableCellRenderer {
+        public CodigoRenderer() {
+            setHorizontalAlignment(SwingConstants.RIGHT);
+        }
+    }
+    
+    private static class CantidadRenderer extends DefaultTableCellRenderer {
+        private final DecimalFormat formatter = new DecimalFormat("#,##0");
+        public CantidadRenderer() {
+            setHorizontalAlignment(SwingConstants.LEFT);
+        }
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            if (value instanceof Number) {
+                value = formatter.format(((Number) value).longValue());
+            }
+            return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        }
+    }
+    
 
     public InvView() {
         initComponents();
+        setResizable(false); 
 
         modeloTabla = new DefaultTableModel(new Object[]{"Código", "Nombre", "Cantidad", "Precio"}, 0) {
             Class[] types = new Class[]{
@@ -30,34 +72,73 @@ public class InvView extends javax.swing.JFrame {
         };
 
         tProductos.setModel(modeloTabla);
+        
+        javax.swing.table.JTableHeader header = tProductos.getTableHeader();
+        java.awt.Font headerFont = header.getFont();
+        header.setFont(headerFont.deriveFont(java.awt.Font.BOLD));
+        
+        tProductos.getColumnModel().getColumn(0).setPreferredWidth(60);
+        tProductos.getColumnModel().getColumn(1).setPreferredWidth(300);
+        tProductos.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tProductos.getColumnModel().getColumn(3).setPreferredWidth(100);
+        
+        tProductos.getColumnModel().getColumn(0).setCellRenderer(new CodigoRenderer());
+        tProductos.getColumnModel().getColumn(2).setCellRenderer(new CantidadRenderer());
+        tProductos.getColumnModel().getColumn(3).setCellRenderer(new PrecioRenderer());
 
         bAgregar.addActionListener(e -> agregarProducto());
     }
-
+    
     private void agregarProducto() {
-        String nombre = JOptionPane.showInputDialog(this, "Nombre del producto:");
-        if (nombre == null || nombre.trim().isEmpty()) return;
+        String nombre;
+        while (true) {
+            nombre = JOptionPane.showInputDialog(this, "Nombre del producto:");
+            if (nombre == null) return;
 
-        String cantidadStr = JOptionPane.showInputDialog(this, "Cantidad:");
-        if (cantidadStr == null) return;
-
-        String precioStr = JOptionPane.showInputDialog(this, "Precio:");
-        if (precioStr == null) return;
-
-        try {
-            int cantidad = Integer.parseInt(cantidadStr.trim());
-            double precio = Double.parseDouble(precioStr.trim());
-
-            String codigo = String.format("%03d", codigoC++);
-
-            Producto producto = new Producto(nombre, cantidad, precio);
-            productos.add(producto);
-
-            modeloTabla.addRow(new Object[]{codigo, nombre, cantidad, precio});
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Cantidad o precio inválido.", "Error", JOptionPane.ERROR_MESSAGE);
+            nombre = nombre.trim();
+            if (nombre.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "El nombre no puede estar vacío.", "Error", JOptionPane.ERROR_MESSAGE);
+            } else if (nombre.length() > 30) {
+                JOptionPane.showMessageDialog(this, "El nombre del producto no debe superar los 30 caracteres.", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                break;
+            }
         }
+
+        int cantidad;
+        while (true) {
+            String cantidadStr = JOptionPane.showInputDialog(this, "Cantidad:");
+            if (cantidadStr == null) return;
+
+            try {
+                cantidad = Integer.parseInt(cantidadStr.trim());
+                break;
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Cantidad inválida. Ingrese un número entero.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        double precio;
+        while (true) {
+            String precioStr = JOptionPane.showInputDialog(this, "Precio:");
+            if (precioStr == null) return;
+
+            try {
+                precio = Double.parseDouble(precioStr.trim());
+                break;
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Precio inválido. Ingrese un número decimal.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        String codigo = String.format("%03d", codigoC++);
+
+        Producto producto = new Producto(nombre, cantidad, precio);
+        productos.add(producto);
+
+        modeloTabla.addRow(new Object[]{codigo, nombre, cantidad, precio});
     }
+
 
 
     @SuppressWarnings("unchecked")
@@ -76,10 +157,7 @@ public class InvView extends javax.swing.JFrame {
         tProductos.setAutoCreateRowSorter(true);
         tProductos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+
             },
             new String [] {
                 "Código", "Nombre", "Cantidad", "Precio"
@@ -111,7 +189,7 @@ public class InvView extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(36, Short.MAX_VALUE)
+                .addGap(36, 36, 36)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(87, 87, 87)
@@ -120,7 +198,7 @@ public class InvView extends javax.swing.JFrame {
                         .addComponent(bEditar)
                         .addGap(74, 74, 74)
                         .addComponent(bEliminar))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 559, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jScrollPane1)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(163, 163, 163)
                         .addComponent(jLabel1)
@@ -130,7 +208,7 @@ public class InvView extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(32, Short.MAX_VALUE)
+                .addGap(32, 32, 32)
                 .addComponent(jLabel1)
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -139,28 +217,14 @@ public class InvView extends javax.swing.JFrame {
                     .addComponent(bAgregar)
                     .addComponent(bEditar)
                     .addComponent(bEliminar))
-                .addGap(55, 55, 55))
+                .addContainerGap(55, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     public static void main(String args[]) {
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
+        FlatDarkLaf.setup();
 
         java.awt.EventQueue.invokeLater(() -> new InvView().setVisible(true));
     }
