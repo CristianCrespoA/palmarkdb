@@ -8,13 +8,14 @@ public class InvView extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(InvView.class.getName());
     private final java.util.List<Producto> productos = new java.util.ArrayList<>();
     private DefaultTableModel modeloTabla;
+    private int codigoC = 1;
 
     public InvView() {
         initComponents();
 
-        modeloTabla = new DefaultTableModel(new Object[]{"Nombre", "Cantidad", "Precio"}, 0) {
+        modeloTabla = new DefaultTableModel(new Object[]{"Código", "Nombre", "Cantidad", "Precio"}, 0) {
             Class[] types = new Class[]{
-                String.class, Integer.class, Double.class
+                String.class, String.class, Integer.class, Double.class
             };
 
             @Override
@@ -47,10 +48,12 @@ public class InvView extends javax.swing.JFrame {
             int cantidad = Integer.parseInt(cantidadStr.trim());
             double precio = Double.parseDouble(precioStr.trim());
 
+            String codigo = String.format("%03d", codigoC++);
+
             Producto producto = new Producto(nombre, cantidad, precio);
             productos.add(producto);
 
-            modeloTabla.addRow(new Object[]{nombre, cantidad, precio});
+            modeloTabla.addRow(new Object[]{codigo, nombre, cantidad, precio});
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Cantidad o precio inválido.", "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -73,17 +76,17 @@ public class InvView extends javax.swing.JFrame {
         tProductos.setAutoCreateRowSorter(true);
         tProductos.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null},
-                {null, null, null},
-                {null, null, null},
-                {null, null, null}
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
             },
             new String [] {
-                "Nombre", "Cantidad", "Precio"
+                "Código", "Nombre", "Cantidad", "Precio"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.Integer.class, java.lang.Double.class
+                java.lang.String.class, java.lang.String.class, java.lang.Integer.class, java.lang.Double.class
             };
 
             public Class getColumnClass(int columnIndex) {
