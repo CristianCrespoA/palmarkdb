@@ -6,10 +6,56 @@ import javax.swing.table.DefaultTableModel;
 public class InvView extends javax.swing.JFrame {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(InvView.class.getName());
+    private final java.util.List<Producto> productos = new java.util.ArrayList<>();
+    private DefaultTableModel modeloTabla;
 
     public InvView() {
         initComponents();
+
+        modeloTabla = new DefaultTableModel(new Object[]{"Nombre", "Cantidad", "Precio"}, 0) {
+            Class[] types = new Class[]{
+                String.class, Integer.class, Double.class
+            };
+
+            @Override
+            public Class getColumnClass(int columnIndex) {
+                return types[columnIndex];
+            }
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        tProductos.setModel(modeloTabla);
+
+        bAgregar.addActionListener(e -> agregarProducto());
     }
+
+    private void agregarProducto() {
+        String nombre = JOptionPane.showInputDialog(this, "Nombre del producto:");
+        if (nombre == null || nombre.trim().isEmpty()) return;
+
+        String cantidadStr = JOptionPane.showInputDialog(this, "Cantidad:");
+        if (cantidadStr == null) return;
+
+        String precioStr = JOptionPane.showInputDialog(this, "Precio:");
+        if (precioStr == null) return;
+
+        try {
+            int cantidad = Integer.parseInt(cantidadStr.trim());
+            double precio = Double.parseDouble(precioStr.trim());
+
+            Producto producto = new Producto(nombre, cantidad, precio);
+            productos.add(producto);
+
+            modeloTabla.addRow(new Object[]{nombre, cantidad, precio});
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Cantidad o precio inválido.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
